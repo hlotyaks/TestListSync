@@ -12,12 +12,14 @@ namespace ConsoleTest
         {
 
             string table = "TestList";
-            string db = @"C:\Users\hlotyaks\Source\Repos\TestListUpdater\Test\10-20-73-TestList.accdb";
-            string asrtxlsx = @"C:\Users\hlotyaks\Source\Repos\TestListUpdater\Test\feb26asrt.xlsx";
-            string bfrxlsx = @"C:\Users\hlotyaks\Source\Repos\TestListUpdater\Test\feb26bfr.xlsx";
+            string db = @"C:\Users\hlotyaks\Source\Repos\TestListSync\Test\10-20-73-TestList.accdb";
+            string asrtxlsx = @"C:\Users\hlotyaks\Source\Repos\TestListSync\Test\mar03asrt.xlsx";
+            string bfrxlsx = @"C:\Users\hlotyaks\Source\Repos\TestListSync\Test\mar03bfr.xlsx";
 
 
-            TestListSynchronizer.DataBaseConnection dbc = new TestListSynchronizer.DataBaseConnection(db, table, asrtxlsx, bfrxlsx);
+            TestListSynchronizer.DatabaseSync dbsync = new TestListSynchronizer.DatabaseSync(db, table);
+            dbsync.UpdateDatabase(asrtxlsx, bfrxlsx);
+
         }
     }
 }

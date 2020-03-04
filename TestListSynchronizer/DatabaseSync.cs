@@ -10,30 +10,38 @@ using System.IO;
 
 namespace TestListSynchronizer
 {
-    public class DataBaseConnection
+    public class DatabaseSync
     {
         private const string SUITEID = "Suite ID";
         private List<int> newDataIDs = new List<int>();
 
-        //Database db;
-        //DBEngine dbEn = new DBEngineClass();
+        Database dbAcess;
+        DBEngine dbEn;
+        string dbName;
+        string dbTable;
 
         //
         // This link has useful information about install the db provider redistributable.
         // https://www.nicelabel.com/support/knowledge-base/article/using-excel-xlsx-and-access-accdb-data-source-in-office-365
         //
 
-        public DataBaseConnection(string db, string table, string asrtxlsx, string bfrxlsx)
+        public DatabaseSync(string db, string table)
         {
+            dbEn = new DBEngineClass();
+            dbName = db;
+            dbTable = table;
+        }
 
-            DBEngine dben = new DBEngineClass();
-            Database dbAcess = dben.OpenDatabase(db);
+        public void UpdateDatabase(string asrtxlsx, string bfrxlsx)
+        {
+            dbAcess = dbEn.OpenDatabase(dbName);
+
             // Refresh the data. will pull from sharepoint.
             dbAcess.TableDefs.Refresh();
 
-            UpdateFromExcel(dbAcess, table, asrtxlsx);
-            UpdateFromExcel(dbAcess, table, bfrxlsx);
-            UpdateDisabledTests(dbAcess, table);
+            UpdateFromExcel(dbAcess, dbTable, asrtxlsx);
+            UpdateFromExcel(dbAcess, dbTable, bfrxlsx);
+            UpdateDisabledTests(dbAcess, dbTable);
 
             dbAcess.Close();
         }
