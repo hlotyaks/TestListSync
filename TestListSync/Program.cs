@@ -4,6 +4,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using CommandLine;
+using TestListSynchronizer;
+using Exceptions = TestListSynchronizer.Exceptions;
 
 namespace TestListSync
 {
@@ -65,15 +67,18 @@ namespace TestListSync
                        {
                            if (!IllegalCommands)
                            {
-                               TestListSynchronizer.DatabaseSync dbsync = new TestListSynchronizer.DatabaseSync(dbFile, dbTable);
+                               DatabaseSync dbsync = new TestListSynchronizer.DatabaseSync(dbFile, dbTable);
                                dbsync.UpdateDatabase(InputFiles[0], InputFiles[1]);
                            }
                        }
-                       catch (Exception e)
+                       catch (Exceptions.ExcelSheetCountException e)
                        {
-
+                           Console.WriteLine($"Excpetion: Illegal number of sheets in spreadsheet {e.Message}. Must be 1.");
                        }
-
+                       catch (Exceptions.ExcelTestCountException e)
+                       {
+                           Console.WriteLine($"Exception: No tests in spreadsheet {e.Message}.");
+                       }
                    });
         }
 

@@ -5,7 +5,7 @@ VisualStudioVersion = 16.0.29609.76
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestListSynchronizer", "TestListSynchronizer.csproj", "{9C5A119F-186C-49E4-B51C-CD83B2C0F397}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestListSync", "..\ConsoleTest\TestListSync.csproj", "{4E888E3B-ABA9-4EFF-A654-5419F8262F78}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestListSync", "..\TestListSync\TestListSync.csproj", "{4E888E3B-ABA9-4EFF-A654-5419F8262F78}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

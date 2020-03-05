@@ -87,6 +87,8 @@ namespace TestListSynchronizer
         {
             // get count of tests
             int totalcount = TestCount(excelFile);
+
+
             int currentcount = 0;
             // really need some sort oif using block around the excel access...
             Recordset recordsExcel = OpenExcelRecords(excelFile);
@@ -216,6 +218,11 @@ namespace TestListSynchronizer
 
             int c = dbExcel.TableDefs.Count;
             // Error if count is greater than 1...
+            if (c != 1)
+            {
+                throw new Exceptions.ExcelSheetCountException(excelFile);
+            }
+
             string sheetName = dbExcel.TableDefs[0].Name;
 
             string query = $"SELECT Count(*) as [CountOfRows] FROM [{sheetName}]";
@@ -224,6 +231,11 @@ namespace TestListSynchronizer
 
             recordsCount.Close();
             dbExcel.Close();
+
+            if (count <= 0)
+            {
+                throw new Exceptions.ExcelTestCountException(excelFile);
+            }
 
             return count;
         }
