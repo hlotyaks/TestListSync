@@ -32,15 +32,15 @@ namespace TestListSynchronizer
             dbTable = table;
         }
 
-        public void UpdateDatabase(string asrtxlsx, string bfrxlsx)
+        public void UpdateDatabase(string filelist1, string filelist2)
         {
             dbAcess = dbEn.OpenDatabase(dbName);
 
             // Refresh the data. will pull from sharepoint.
             dbAcess.TableDefs.Refresh();
 
-            UpdateFromExcel(dbAcess, dbTable, asrtxlsx);
-            UpdateFromExcel(dbAcess, dbTable, bfrxlsx);
+            UpdateFromExcel(dbAcess, dbTable, filelist1);
+            UpdateFromExcel(dbAcess, dbTable, filelist2);
             UpdateDisabledTests(dbAcess, dbTable);
 
             dbAcess.Close();
