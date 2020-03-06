@@ -21,6 +21,9 @@ namespace TestListSync
 
             [Option('t', "table", Required = true, HelpText = "Table in database containing test results")]
             public string DatabaseTable { get; set; }
+
+            [Option('h', "help", HelpText = "Show help")]
+            public bool Help { get; set; }
         }
 
         static void Main(string[] args)
@@ -33,6 +36,12 @@ namespace TestListSync
             Parser.Default.ParseArguments<Options>(args)
                    .WithParsed<Options>(o =>
                    {
+                       if(o.Help)
+                       {
+                           ShowHelp();
+                           return;
+                       }
+
                        if (o.TestFiles.Count() == 0)
                        {
                            ShowHelp();
@@ -78,6 +87,10 @@ namespace TestListSync
                        catch (Exceptions.ExcelTestCountException e)
                        {
                            Console.WriteLine($"Exception: No tests in spreadsheet {e.Message}.");
+                       }
+                       catch (Exceptions.DatabaseOpenException e)
+                       {
+                           Console.WriteLine($"Exception: Error opening database {e.Message}. Verify it is not currently open.");
                        }
                    });
         }

@@ -17,4 +17,10 @@ namespace TestListSynchronizer.Exceptions
         public ExcelTestCountException(string message) : base(message)
         { }
     }
+
+    public class DatabaseOpenException : Exception
+    {
+        public DatabaseOpenException(string message) : base(message)
+        { }
+    }
 }

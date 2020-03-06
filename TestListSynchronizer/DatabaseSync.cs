@@ -34,8 +34,14 @@ namespace TestListSynchronizer
 
         public void UpdateDatabase(string filelist1, string filelist2)
         {
-            dbAcess = dbEn.OpenDatabase(dbName);
-
+            try
+            {
+                dbAcess = dbEn.OpenDatabase(dbName);
+            }
+            catch (Exception)
+            {
+                throw new Exceptions.DatabaseOpenException(dbName);
+            }
             // Refresh the data. will pull from sharepoint.
             dbAcess.TableDefs.Refresh();
 
