@@ -32,15 +32,21 @@ namespace TestListSynchronizer
             dbTable = table;
         }
 
-        public void UpdateDatabase(string asrtxlsx, string bfrxlsx)
+        public void UpdateDatabase(string filelist1, string filelist2)
         {
-            dbAcess = dbEn.OpenDatabase(dbName);
-
+            try
+            {
+                dbAcess = dbEn.OpenDatabase(dbName);
+            }
+            catch (Exception)
+            {
+                throw new Exceptions.DatabaseOpenException(dbName);
+            }
             // Refresh the data. will pull from sharepoint.
             dbAcess.TableDefs.Refresh();
 
-            UpdateFromExcel(dbAcess, dbTable, asrtxlsx);
-            UpdateFromExcel(dbAcess, dbTable, bfrxlsx);
+            UpdateFromExcel(dbAcess, dbTable, filelist1);
+            UpdateFromExcel(dbAcess, dbTable, filelist2);
             UpdateDisabledTests(dbAcess, dbTable);
 
             dbAcess.Close();
@@ -87,6 +93,8 @@ namespace TestListSynchronizer
         {
             // get count of tests
             int totalcount = TestCount(excelFile);
+
+
             int currentcount = 0;
             // really need some sort oif using block around the excel access...
             Recordset recordsExcel = OpenExcelRecords(excelFile);
@@ -216,6 +224,11 @@ namespace TestListSynchronizer
 
             int c = dbExcel.TableDefs.Count;
             // Error if count is greater than 1...
+            if (c != 1)
+            {
+                throw new Exceptions.ExcelSheetCountException(excelFile);
+            }
+
             string sheetName = dbExcel.TableDefs[0].Name;
 
             string query = $"SELECT Count(*) as [CountOfRows] FROM [{sheetName}]";
@@ -224,6 +237,11 @@ namespace TestListSynchronizer
 
             recordsCount.Close();
             dbExcel.Close();
+
+            if (count <= 0)
+            {
+                throw new Exceptions.ExcelTestCountException(excelFile);
+            }
 
             return count;
         }
