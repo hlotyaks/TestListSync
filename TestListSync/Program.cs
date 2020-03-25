@@ -16,6 +16,9 @@ namespace TestListSync
             [Option('f', "files", Required = true, HelpText = "Files containing latest test results")]
             public IEnumerable<string> TestFiles { get; set; }
 
+            [Option('p', "parent", Required = false, HelpText = "Parent Files containing test results from last RI")]
+            public IEnumerable<string> ParentrTestFiles { get; set; }
+
             [Option('d', "database", Required = true, HelpText = "Database file name containing test results")]
             public string DatabaseFile { get; set; }
 
@@ -29,6 +32,7 @@ namespace TestListSync
         static void Main(string[] args)
         {
             List<string> InputFiles = new List<string>();
+            List<string> ParentFiles = new List<string>();
             string dbFile=null;
             string dbTable = null; ;
             bool IllegalCommands = false;
@@ -42,6 +46,7 @@ namespace TestListSync
                            return;
                        }
 
+                       // Check for the test files
                        if (o.TestFiles.Count() == 0)
                        {
                            ShowHelp();
@@ -50,6 +55,18 @@ namespace TestListSync
                        else
                        {
                            InputFiles.AddRange(o.TestFiles);
+                       }
+
+                       // Check for the parent test files.  These are optional
+                       if (o.ParentrTestFiles.Count() != 0)
+                       {
+                           ParentFiles.AddRange(o.ParentrTestFiles);
+                           // Has to be 2 files. ASRT and BFR
+                           if (ParentFiles.Count != 2)
+                           {
+                               ShowHelp();
+                               IllegalCommands = true;
+                           }
                        }
 
                        if (o.DatabaseFile == null)
@@ -104,8 +121,10 @@ namespace TestListSync
             Console.WriteLine("-f : Path to Excel files containing latest test data");
             Console.WriteLine("-d : Path to database file that is synced with the Sharepoint site");
             Console.WriteLine("-t : Name of database table that will be updated with the Excel data");
+            Console.WriteLine("-p : Path to files containing parent branch test results.  This should be results from the point of the last integration.");
             Console.WriteLine("");
             Console.WriteLine(@"Example: TestListSyc -f C:\tmp\asrt.xlsx C:\tmp\bfr.xlsx -d C:\tmp\database.accdb -t Table1");
+            Console.WriteLine(@"Example: TestListSyc -f C:\tmp\asrt.xlsx C:\tmp\bfr.xlsx -p C:\tmp\parent-asrt.xlsx C:\tmp\parnet-bfr.xlsx -d C:\tmp\database.accdb -t Table1");
             Console.WriteLine("");
 
         }
