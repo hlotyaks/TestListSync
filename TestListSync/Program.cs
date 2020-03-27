@@ -115,7 +115,7 @@ namespace TestListSync
                            if (!dbsync.IsErrors)
                            {
                                Console.WriteLine("");
-                               Console.WriteLine("Errors:");
+                               Console.WriteLine("Warnings:");
                                dbsync.ErrorList.ForEach(s => Console.WriteLine(s));
                            }
                        }
