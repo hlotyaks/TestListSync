@@ -89,12 +89,13 @@ namespace TestListSync
                            dbTable = o.DatabaseTable;
                        }
 
+                       DatabaseSync dbsync = new TestListSynchronizer.DatabaseSync(dbFile, dbTable);
+
                        try
                        {
                            if (!IllegalCommands)
-                           {
-                               DatabaseSync dbsync = new TestListSynchronizer.DatabaseSync(dbFile, dbTable);
-                               dbsync.UpdateDatabase(InputFiles[0], InputFiles[1]);
+                           {                       
+                               dbsync.UpdateDatabase(InputFiles[0], InputFiles[1], ParentFiles[0], ParentFiles[1]);
                            }
                        }
                        catch (Exceptions.ExcelSheetCountException e)
@@ -108,6 +109,15 @@ namespace TestListSync
                        catch (Exceptions.DatabaseOpenException e)
                        {
                            Console.WriteLine($"Exception: Error opening database {e.Message}. Verify it is not currently open.");
+                       }
+                       finally
+                       {
+                           if (!dbsync.IsErrors)
+                           {
+                               Console.WriteLine("");
+                               Console.WriteLine("Warnings:");
+                               dbsync.ErrorList.ForEach(s => Console.WriteLine(s));
+                           }
                        }
                    });
         }
