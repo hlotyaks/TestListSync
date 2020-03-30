@@ -32,7 +32,7 @@ namespace TestListSynchronizer
             dbTable = table;
         }
 
-        public void UpdateDatabase(string filelist1, string filelist2, string parentfilelist1, string parentfilelist2)
+        public void UpdateDatabase(List<string> filelist, List<string> parentfilelist)
         {
             try
             {
@@ -45,11 +45,13 @@ namespace TestListSynchronizer
             // Refresh the data. will pull from sharepoint.
             dbAcess.TableDefs.Refresh();
 
-            UpdateFromFile(dbAcess, dbTable, filelist1);
-            UpdateFromFile(dbAcess, dbTable, filelist2);
-            UpdateFromParentFile(dbAcess, dbTable, parentfilelist1);
-            UpdateFromParentFile(dbAcess, dbTable, parentfilelist2);
-
+            UpdateFromFile(dbAcess, dbTable, filelist[0]);
+            UpdateFromFile(dbAcess, dbTable, filelist[1]);
+            if (parentfilelist.Count() == 2)
+            {
+                UpdateFromParentFile(dbAcess, dbTable, parentfilelist[0]);
+                UpdateFromParentFile(dbAcess, dbTable, parentfilelist[1]);
+            }
             UpdateDisabledTests(dbAcess, dbTable);
 
             dbAcess.Close();

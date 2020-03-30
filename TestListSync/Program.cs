@@ -94,8 +94,10 @@ namespace TestListSync
                        try
                        {
                            if (!IllegalCommands)
-                           {                       
-                               dbsync.UpdateDatabase(InputFiles[0], InputFiles[1], ParentFiles[0], ParentFiles[1]);
+                           {
+
+                            dbsync.UpdateDatabase(InputFiles, ParentFiles);
+                               
                            }
                        }
                        catch (Exceptions.ExcelSheetCountException e)
