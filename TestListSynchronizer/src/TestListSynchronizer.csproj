@@ -41,9 +41,19 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Database.cs" />
+    <Compile Include="DatabaseEngine.cs" />
+    <Compile Include="DatabaseEngineFactory.cs" />
     <Compile Include="DatabaseSync.cs" />
     <Compile Include="Exceptions.cs" />
+    <Compile Include="IDatabase.cs" />
+    <Compile Include="IDatabaseEngine.cs" />
+    <Compile Include="IDatabaseEngineFactory.cs" />
+    <Compile Include="IRecords.cs" />
+    <Compile Include="IRecordUpdater.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Records.cs" />
+    <Compile Include="RecordUpdater.cs" />
   </ItemGroup>
   <ItemGroup>
     <COMReference Include="ADOX">

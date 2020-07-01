@@ -61,12 +61,6 @@ namespace TestListSync
                        if (o.ParentrTestFiles.Count() != 0)
                        {
                            ParentFiles.AddRange(o.ParentrTestFiles);
-                           // Has to be 2 files. ASRT and BFR
-                           if (ParentFiles.Count != 2)
-                           {
-                               ShowHelp();
-                               IllegalCommands = true;
-                           }
                        }
 
                        if (o.DatabaseFile == null)
@@ -89,15 +83,23 @@ namespace TestListSync
                            dbTable = o.DatabaseTable;
                        }
 
-                       DatabaseSync dbsync = new TestListSynchronizer.DatabaseSync(dbFile, dbTable);
+                       IDatabaseEngineFactory factory = new DatabaseEngineFactory();
+                       DatabaseSync dbsync = new TestListSynchronizer.DatabaseSync(dbFile, dbTable, factory);
 
                        try
                        {
                            if (!IllegalCommands)
                            {
+                               // no parent files to process
+                               if (ParentFiles.Count == 0)
+                               {
+                                   dbsync.UpdateDatabase(InputFiles);
+                               }
+                               else
+                               {
+                                   dbsync.UpdateDatabase(InputFiles, ParentFiles);
+                               }
 
-                            dbsync.UpdateDatabase(InputFiles, ParentFiles);
-                               
                            }
                        }
                        catch (Exceptions.ExcelSheetCountException e)
