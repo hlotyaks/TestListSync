@@ -7,7 +7,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestListSync", "TestListSyn
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestListSynchronizer", "TestListSynchronizer\src\TestListSynchronizer.csproj", "{9C5A119F-186C-49E4-B51C-CD83B2C0F397}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UnitTest", "TestListSynchronizer\test\UnitTest\UnitTest.csproj", "{49ADAB1F-A8A2-4DFC-9C01-0C28D920F148}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UnitTest", "TestListSynchronizer\test\UnitTest.csproj", "{49ADAB1F-A8A2-4DFC-9C01-0C28D920F148}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
