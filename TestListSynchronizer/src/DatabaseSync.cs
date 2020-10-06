@@ -73,6 +73,23 @@ namespace TestListSynchronizer
             }
         }
 
+        public void UpdateDatabase(string project, string baseline, string parentProject, string parentProjectBaseline)
+        {
+            using (IDatabase db = _engine.Open(dbName))
+            {
+                UpdateFromJarvis(db, dbTable, project, baseline);
+                
+                if (parentProject != null)
+                {
+                    UpdateParentFromJarvis(db, dbTable, parentProject, parentProjectBaseline);
+                }
+
+                UpdateDisabledTests(db, dbTable);
+            }
+        }
+
+
+
         /// <summary>
         /// 
         /// </summary>
@@ -177,6 +194,52 @@ namespace TestListSynchronizer
             }
         }
     
+        private void UpdateFromJarvis(IDatabase db, string accessTable, string project, string baseline)
+        {
+            // get project results from Jarvis
+            List<SuiteResult> results = (baseline == null) ?
+             JarvisWrapper.FetchResults(project) :
+             JarvisWrapper.FetchResults(project, baseline);
+
+            // get count of tests
+            int totalTestCount = results.Count();
+            int currentTest = 0;
+
+            Console.WriteLine($"\n\nUpdating database with {project} test results");
+
+            results.ForEach(item =>
+            {
+                currentTest++;
+                Console.Write($"\r Updating {currentTest} of {totalTestCount}");
+
+                // suiteid 
+                int suiteID = item.SuiteID;
+
+                // keep track of all the suite IDs we see in the data
+                _recordUpdater.AddIncommingRecord(suiteID);
+
+                // query for the suite id record in the access database
+                string query = $"SELECT * FROM {accessTable} WHERE [Suite ID] = {suiteID}";
+
+                using (IRecords dbRecords = db.OpenRecords(query))
+                {
+                    // EOF will = true if the suiteID was not found in the database.  This means it is a new record.
+                    if (dbRecords.EOF)
+                    {
+                        // Add new record if it was not found
+                        _recordUpdater.NewRecord(dbRecords, item);
+                    }
+                    else 
+                    {
+                        // Update the existing record
+                        _recordUpdater.UpdateRecord(dbRecords, item);
+                    }
+                }
+
+            });
+        }
+
+
         /// <summary>
         /// 
         /// </summary>
@@ -230,6 +293,46 @@ namespace TestListSynchronizer
                     }
                 }
             }
+        }
+
+        private void UpdateParentFromJarvis(IDatabase db, string dbTable, string parentProject, string parentProjectBaseline)
+        {
+
+            // get results for the parent project at a specific baseline
+            List<SuiteResult> results = JarvisWrapper.FetchResults(parentProject, parentProjectBaseline);
+
+            // get count of tests
+            int totalTestCount = results.Count();
+            int currentTest = 0;
+
+            Console.WriteLine($"\n\nUpdating database with parent results {parentProject}@{parentProjectBaseline}");
+
+            results.ForEach(item =>
+            {
+                currentTest++;
+                Console.Write($"\r Updating {currentTest} of {totalTestCount}");
+
+                // suiteid 
+                int suiteID = item.SuiteID;
+
+                // query for the suite id record in the access database
+                string query = $"SELECT * FROM {dbTable} WHERE [Suite ID] = {suiteID}";
+
+                using (IRecords dbRecords = db.OpenRecords(query))
+                {
+
+                    // If we find a test in the parent data that is not in the database then we are probably 
+                    // using the wrong date for the parent data since the rebase should have brought over new tests.
+                    if (dbRecords.EOF)
+                    {
+                        errors.Add($"Suite ID [{suiteID}] not found in database. Possible use of incorrect parent branch result data");
+                    }
+                    else 
+                    {
+                        _recordUpdater.UpdateParentRecord(dbRecords, item);
+                    }
+                }
+            });
         }
 
         /// <summary>
