@@ -70,9 +70,9 @@ namespace TestListSync
                         jarvisPath = $"{o.JarvisConsolePath}\\{jarvisExe}";
                     }
 
-                    ///
-                    /// Get the database file name
-                    ///
+                    //
+                    // Get the database file name
+                    //
                     if (o.DatabaseFile == null)
                     {
                         ShowHelp();
@@ -83,9 +83,9 @@ namespace TestListSync
                         dbFile = o.DatabaseFile;
                     }
 
-                    ///
-                    /// Get the database table name
-                    ///
+                    //
+                    // Get the database table name
+                    //
                     if (o.DatabaseTable == null)
                     {
                         ShowHelp();
@@ -96,9 +96,9 @@ namespace TestListSync
                         dbTable = o.DatabaseTable;
                     }
 
-                    ///
-                    /// Get the project name
-                    ///
+                    //
+                    // Get the project name
+                    //
                     if (o.Project == null)
                     {
                         ShowHelp();
@@ -107,6 +107,18 @@ namespace TestListSync
                     else
                     {
                         project = o.Project;
+                    }
+
+                    //
+                    // Get th ebaseline to us for the project.  Is optional.
+                    //
+                    if (o.ProjectBaseline == null)
+                    {
+                        baseline = null;
+                    }
+                    else
+                    {
+                        baseline = o.ProjectBaseline;
                     }
 
                     // if parent project is provided then the parent baseline is also required
