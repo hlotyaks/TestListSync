@@ -1,8 +1,10 @@
 ﻿namespace TestListSynchronizer
 {
-    public interface IDatabaseEngineFactory
+    public interface ITestListSyncFactory
     {
         IDatabaseEngine CreateDatabaseEngine();
         IRecordUpdater CreateRecordUpdater();
+        IJarvisWrapper CreateJarvisWrapper();
+
     }
 }

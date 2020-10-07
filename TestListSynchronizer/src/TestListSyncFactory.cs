@@ -6,11 +6,16 @@ using System.Threading.Tasks;
 
 namespace TestListSynchronizer
 {
-    public class DatabaseEngineFactory : IDatabaseEngineFactory
+    public class TestListSyncFactory : ITestListSyncFactory
     {
         public IDatabaseEngine CreateDatabaseEngine()
         {
             return new DatabaseEngine() as IDatabaseEngine;
+        }
+
+        public IJarvisWrapper CreateJarvisWrapper()
+        {
+            return new JarvisWrapper() as IJarvisWrapper;
         }
 
         public IRecordUpdater CreateRecordUpdater()

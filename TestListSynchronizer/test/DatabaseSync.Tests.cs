@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Linq;
 using System.Collections.Generic;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using TestListSynchronizer;
@@ -12,224 +13,161 @@ namespace UnitTest
     public class DatabaseSyncTests
     {
         DatabaseSync dbsync;
-        Mock<IDatabaseEngineFactory> mockFactory;
+        Mock<ITestListSyncFactory> mockFactory;
         Mock<IDatabaseEngine> mockEngine;
         Mock<IDatabase> mockXLDB;
         Mock<IDatabase> mockDB;
         Mock<IRecords> mockXLRecords;
         Mock<IRecords> mockDBRecords;
         Mock<IRecordUpdater> mockRecordUpdater;
+        Mock<IJarvisWrapper> mockJarvis;
         string database = "db";
         string dbtable = "dbtable";
 
         [TestInitialize]
         public void TestSetup()
         {
-            mockFactory = new Mock<IDatabaseEngineFactory>();
+            mockFactory = new Mock<ITestListSyncFactory>();
             mockEngine = new Mock<IDatabaseEngine>();
             mockXLDB = new Mock<IDatabase>();
             mockDB = new Mock<IDatabase>();
             mockXLRecords = new Mock<IRecords>();
             mockDBRecords = new Mock<IRecords>();
             mockRecordUpdater = new Mock<IRecordUpdater>();
+            mockJarvis = new Mock<IJarvisWrapper>();
 
             mockFactory.Setup(x => x.CreateDatabaseEngine()).Returns(mockEngine.Object);
             mockFactory.Setup(x => x.CreateRecordUpdater()).Returns(mockRecordUpdater.Object);
+            mockFactory.Setup(x => x.CreateJarvisWrapper()).Returns(mockJarvis.Object);
 
             dbsync = new DatabaseSync(database, dbtable, mockFactory.Object);
             dbsync.Should().NotBeNull();
         }
 
         [TestMethod]
-        public void UpdateDatabase1()
+        public void UpdateDatabaseFromProjectOneSuite()
         {
-            List<string> filelist = new List<string>(new[] { "file1" });
-            List<int> incommingSuiteIDs = new List<int>(new[] { 1, 2 });
+            string project = "test-project";
+            string baseline = null;
+            string parentProject = null;
+            string parentBaseline = null;
+            int suiteIDX = 0;
+            List<SuiteResult> testdata = new List<SuiteResult>();
+
+            testdata.Add(CreateTestData(1));
+            List<int> incommingSuiteIDs = testdata.Select(i => i.SuiteID).ToList();
             List<int> dbSuiteIDs = new List<int>(new[] { 1 });
 
-            int currentSuiteID=0;
-            string fileName = "file1";
-            string tableName = "table";
-            int tableCount = 1;
-            int testCount = 1;
-            int xlidx = 0;
-            int dbidx = 0;
-
-            mockEngine.Setup(x => x.Open(database)).Returns(mockDB.Object);
-
-            MockTestCountCall(fileName, tableName, tableCount, testCount);
             MockUpdateDisabledTests(incommingSuiteIDs);
 
-            mockEngine.Setup(x => x.Open(fileName, "Excel 12.0 Xml;HDR=YES;")).Returns(mockXLDB.Object);
-            mockXLDB.Setup(x => x.TableCount).Returns(tableCount);
-            mockXLDB.Setup(x => x.OpenRecords("table")).Returns(mockXLRecords.Object);
-
-            mockXLRecords.Setup(x => x.EOF).Returns(() =>
-                {
-                    if (xlidx < incommingSuiteIDs.Count)
-                    {
-                        return false;
-                    }
-
-                    return true;
-                });
-
-            mockXLRecords.Setup(x => x.GetSuiteID()).Returns(() =>
-                {
-                    currentSuiteID = incommingSuiteIDs[xlidx++];
-                    return currentSuiteID;
-                });
-
-            mockRecordUpdater.Setup(x => x.AddIncommingRecord(It.IsAny<int>()));
+            mockEngine.Setup(x => x.Open(database)).Returns(mockDB.Object);
+            mockJarvis.Setup(x => x.FetchResults(project)).Returns(testdata);
 
             mockDB.Setup(x => x.OpenRecords(It.IsRegex(@"SELECT \* FROM dbtable WHERE \[Suite ID] = \d*"))).Returns(mockDBRecords.Object);
 
             mockDBRecords.Setup(x => x.EOF).Returns(() =>
             {
-                if (dbSuiteIDs.Contains(currentSuiteID))
+                if (dbSuiteIDs.Contains(incommingSuiteIDs[suiteIDX]))
                 {
+                    suiteIDX++;
                     return false;
                 }
 
                 return true;
             });
 
-            dbsync.UpdateDatabase(filelist);
 
-            mockRecordUpdater.Verify(x => x.NewRecord(It.IsAny<IRecords>(), It.IsAny<IRecords>()));
-            mockRecordUpdater.Verify(x => x.UpdateRecord(It.IsAny<IRecords>(), It.IsAny<IRecords>()));
+            dbsync.UpdateDatabase(project, baseline, parentProject, parentBaseline);
 
-
-            //List<string> filelist = new List<string>();
-            //filelist.Add("file1");
-            //List<int> suiteIDs = new List<int>(new[] { 1, 2 });
-            //int xlidx = 0;
-            //int dbidx = 0;
-
-
-            ////int suiteID = 1;
-            ////string suiteQuery = $"SELECT * FROM {dbtable} WHERE [Suite ID] = {suiteID}";
-            //bool firstTime = true;
-
-            //mockEngine.Setup(x => x.Open(database)).Returns(mockDB.Object);
-
-            //MockTestCountCall(fileName, tableName, tableCount, testCount);
-            ////MockUpdateDisabledTests(new Queue<int>(new[] { 1, 2 }));
-
-            //mockEngine.Setup(x => x.Open(fileName, "Excel 12.0 Xml;HDR=YES;")).Returns(mockXLDB.Object);
-            //mockXLDB.Setup(x => x.TableCount).Returns(tableCount);
-            //mockXLDB.Setup(x => x.OpenRecords("table")).Returns(mockXLRecords.Object);
-            //mockXLRecords.Setup(x => x.EOF).Returns(() =>
-            //    {
-            //        if (xlidx < suiteIDs.Count)
-            //        {
-            //            return false;
-            //        }
-
-            //        return true;
-            //    });
-
-            //mockXLRecords.Setup(x => x.GetFieldValue("Suite ID")).Returns(() =>
-            //    {
-            //        double suiteID = (double)suiteIDs[xlidx++];
-            //        return suiteID;
-            //    });
-
-
-            //mockDB.Setup(x => x.OpenRecords("SELECT * FROM dbtable")).Returns(mockDBRecords.Object);
-
-            ////SELECT * FROM dbtable WHERE [Suite ID] = 1//
-            //Regex rx = new Regex(@"SELECT \* FROM dbtable WHERE [Suite ID] = \d*", RegexOptions.Compiled | RegexOptions.IgnoreCase);
-            //Regex rx2 = new Regex(@"SELECT \* FROM dbtable WHERE \[Suite ID] = \d*");
-
-            //string text = "SELECT * FROM dbtable WHERE [Suite ID] = 1";
-            //string text2 = "SELECT * FROM dbtable WHERE [Suite ID] = 1";
-            //MatchCollection matches = rx.Matches(text);
-            //matches = rx2.Matches(text2);
-
-            //mockDB.Setup(x => x.OpenRecords(It.IsRegex(@"SELECT \* FROM dbtable WHERE \[Suite ID] = \d*"))).Returns(mockDBRecords.Object);
-            //mockDB.Setup(x => x.OpenRecords(It.IsRegex(@"SELECT \* FROM dbtable"))).Returns(mockDBRecords.Object);
-
-            //mockDBRecords.Setup(x => x.EOF).Returns(() =>
-            //{
-            //    if (dbidx < suiteIDs.Count)
-            //    {
-            //        return false;
-            //    }
-
-            //    return true;
-            //});
-
-            //mockDBRecords.Setup(x => x.GetFieldValue("Suite ID")).Returns(() =>
-            //{
-            //    double suiteID = (double)suiteIDs[dbidx++];
-            //    return suiteID;
-            //});
-
-            //mockDBRecords.Setup(x => x.EOF).Returns(false);      
-
-            //dbsync.UpdateDatabase(filelist);
-
-            //mockXLRecords.Verify(x => x.MoveNext());
-            //mockDBRecords.Verify(x => x.Edit());
-            //mockDBRecords.Verify(x => x.Update());
-        }
-
-        [TestMethod]
-        public void TestCount1()
-        {
-            string fileName = "file1";
-            string tableName = "table";
-            int tableCount = 1;
-            int testCount = 1;
-
-            MockTestCountCall(fileName, tableName, tableCount, testCount);
-
-            int value = dbsync.TestCount(fileName);
-            value.Should().Be(testCount);
+            mockRecordUpdater.Verify(x => x.NewRecord(It.IsAny<IRecords>(), It.IsAny<SuiteResult>()), Times.Exactly(0));
+            mockRecordUpdater.Verify(x => x.UpdateRecord(It.IsAny<IRecords>(), It.IsAny<SuiteResult>()), Times.Exactly(1));
 
         }
 
         [TestMethod]
-        [ExpectedException(typeof(TestListSynchronizer.Exceptions.ExcelSheetCountException))]
-        public void TestCount2()
+        public void UpdateDatabaseFromProjectTwoSuites()
         {
-            string fileName = "file1";
-            string tableName = "table";
-            int tableCount = 0;
-            int testCount = 1;
+            string project = "test-project";
+            string baseline = null;
+            string parentProject = null;
+            string parentBaseline = null;
+            int suiteIDX = 0;
+            List<SuiteResult> testdata = new List<SuiteResult>();
 
-            MockTestCountCall(fileName, tableName, tableCount, testCount);
+            testdata.Add(CreateTestData(1));
+            testdata.Add(CreateTestData(2));
+            List<int> incommingSuiteIDs = testdata.Select(i => i.SuiteID).ToList();
+            List<int> dbSuiteIDs = new List<int>(new[] { 1 });
 
-            int value = dbsync.TestCount(fileName);
-            value.Should().Be(testCount);
+            MockUpdateDisabledTests(incommingSuiteIDs);
+
+            mockEngine.Setup(x => x.Open(database)).Returns(mockDB.Object);
+            mockJarvis.Setup(x => x.FetchResults(project)).Returns(testdata);
+
+            mockDB.Setup(x => x.OpenRecords(It.IsRegex(@"SELECT \* FROM dbtable WHERE \[Suite ID] = \d*"))).Returns(mockDBRecords.Object);
+
+            mockDBRecords.Setup(x => x.EOF).Returns(() =>
+            {
+                if (dbSuiteIDs.Contains(incommingSuiteIDs[suiteIDX]))
+                {
+                    suiteIDX++;
+                    return false;
+                }
+
+                return true;
+            });
+
+
+            dbsync.UpdateDatabase(project, baseline, parentProject, parentBaseline);
+
+            mockRecordUpdater.Verify(x => x.NewRecord(It.IsAny<IRecords>(), It.IsAny<SuiteResult>()), Times.Exactly(1));
+            mockRecordUpdater.Verify(x => x.UpdateRecord(It.IsAny<IRecords>(), It.IsAny<SuiteResult>()), Times.Exactly(1));
 
         }
+
         [TestMethod]
-        [ExpectedException(typeof(TestListSynchronizer.Exceptions.ExcelTestCountException))]
-        public void TestCount3()
+        public void UpdateDatabaseFromProjectTwoSuitesAndParentData()
         {
-            string fileName = "file1";
-            string tableName = "table";
-            int tableCount = 1;
-            int testCount = -1;
+            string project = "test-project";
+            string baseline = null;
+            string parentProject = "parent-project";
+            string parentBaseline = "parent-baseline";
+            int suiteIDX = 0;
+            List<SuiteResult> testdata = new List<SuiteResult>();
 
-            MockTestCountCall(fileName, tableName, tableCount, testCount);
+            testdata.Add(CreateTestData(1));
+            testdata.Add(CreateTestData(2));
+            List<int> incommingSuiteIDs = testdata.Select(i => i.SuiteID).ToList();
+            List<int> dbSuiteIDs = testdata.Select(i => i.SuiteID).ToList();
 
-            int value = dbsync.TestCount(fileName);
-            value.Should().Be(testCount);
+            MockUpdateDisabledTests(incommingSuiteIDs);
 
-        }
+            mockEngine.Setup(x => x.Open(database)).Returns(mockDB.Object);
+            mockJarvis.Setup(x => x.FetchResults(project)).Returns(testdata);
+            mockJarvis.Setup(x => x.FetchResults(parentProject, parentBaseline)).Returns(testdata);
 
-        private void MockTestCountCall(string filename, string tablename, int tablecount, int testcount)
-        {
-            string countQuery = $"SELECT Count(*) as [CountOfRows] FROM [{tablename}]";
+            mockDB.Setup(x => x.OpenRecords(It.IsRegex(@"SELECT \* FROM dbtable WHERE \[Suite ID] = \d*"))).Returns(mockDBRecords.Object);
 
-            mockEngine.Setup(x => x.Open(filename, "Excel 12.0 Xml;HDR=YES;")).Returns(mockXLDB.Object);
-            mockXLDB.Setup(x => x.TableCount).Returns(tablecount);
-            mockXLDB.Setup(x => x.TableName(0)).Returns(tablename);
-            mockXLDB.Setup(x => x.OpenRecords(countQuery)).Returns(mockXLRecords.Object);
-            mockXLRecords.Setup(x => x.GetFieldValue("CountOfRows")).Returns(testcount);
+            mockDBRecords.Setup(x => x.EOF).Returns(() =>
+            {
+                if (dbSuiteIDs.Contains(incommingSuiteIDs[suiteIDX]))
+                {
+                    suiteIDX++;
+                    if (suiteIDX == testdata.Count)
+                        suiteIDX = 0;
+                    return false;
+                }
+
+                return true;
+            });
+
+
+            dbsync.UpdateDatabase(project, baseline, parentProject, parentBaseline);
+
+            mockRecordUpdater.Verify(x => x.NewRecord(It.IsAny<IRecords>(), It.IsAny<SuiteResult>()), Times.Exactly(0));
+            mockRecordUpdater.Verify(x => x.UpdateRecord(It.IsAny<IRecords>(), It.IsAny<SuiteResult>()), Times.Exactly(2));
+            mockRecordUpdater.Verify(x => x.UpdateParentRecord(It.IsAny<IRecords>(), It.IsAny<SuiteResult>()), Times.Exactly(2));
+
         }
 
         private void MockUpdateDisabledTests(List<int> suiteIDs)
@@ -257,5 +195,28 @@ namespace UnitTest
                 return currentSuiteID;
             });
         }
+        private SuiteResult CreateTestData(int suiteid)
+        {
+
+            SuiteResult s1 = new SuiteResult();
+            s1.Defect = "defect";
+            s1.ElapsedTime = 1000;
+            s1.EnvironmentTags = new string[] { "ASRT", "Windows10", "64bit", "Office2016" };
+            s1.FirstFail = "Nov3-20";
+            s1.KitDate = "Nov3-20";
+            s1.MachineName = "bob";
+            s1.Organization = "QA";
+            s1.Platform = "UF";
+            s1.Result = "Passed";
+            s1.SimulationType = "none";
+            s1.SuiteID = suiteid;
+            s1.SuiteName = "suite name";
+            s1.User = "hal";
+
+            return s1;
+
+        }
     }
+   
+
 }

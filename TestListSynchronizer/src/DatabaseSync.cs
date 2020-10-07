@@ -17,10 +17,12 @@ namespace TestListSynchronizer
         private List<int> _incomingSuiteIDs = new List<int>();
         private List<string> errors = new List<string>();
         IDatabaseEngine _engine;
-        IDatabaseEngineFactory _dbenginefactory;
+        ITestListSyncFactory _dbenginefactory;
         IRecordUpdater _recordUpdater;
+        IJarvisWrapper _jarvis;
         string dbName;
         string dbTable;
+        static JarvisWrapper jarvis;
 
         //
         // This link has useful information about install the db provider redistributable.
@@ -32,47 +34,24 @@ namespace TestListSynchronizer
         /// </summary>
         /// <param name="db"></param>
         /// <param name="table"></param>
-        public DatabaseSync(string db, string table, IDatabaseEngineFactory factory)
+        public DatabaseSync(string db, string table, ITestListSyncFactory factory)
         {
             _dbenginefactory = factory;
             _engine = _dbenginefactory.CreateDatabaseEngine();
             _recordUpdater = _dbenginefactory.CreateRecordUpdater();
+            _jarvis = _dbenginefactory.CreateJarvisWrapper();
             dbName = db;
             dbTable = table;
         }
 
         /// <summary>
-        /// 
+        /// Will updated the database with the project data.  If parent data is provided that will also be updated
+        /// Data is retrieved from Jarvis.
         /// </summary>
-        /// <param name="filelist"></param>
-        /// <param name="parentfilelist"></param>
-        public void UpdateDatabase(List<string> filelist)
-        {
-            using (IDatabase db = _engine.Open(dbName))
-            {
-                filelist.ForEach(item => UpdateFromFile(db, dbTable, item));
-                UpdateDisabledTests(db, dbTable);
-            }
-        }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="filelist"></param>
-        /// <param name="parentfilelist"></param>
-        public void UpdateDatabase(List<string> filelist, List<string> parentfilelist)
-        {
-            using (IDatabase db = _engine.Open(dbName))
-            {
-                filelist.ForEach(item => UpdateFromFile(db, dbTable, item));
-
-                // parent data files
-                filelist.ForEach(item => UpdateFromParentFile(db, dbTable, item));
-                
-                UpdateDisabledTests(db, dbTable);
-            }
-        }
-
+        /// <param name="project">Project name. Example: uflx2_PublicAPI</param>
+        /// <param name="baseline">If not provided the latest baseline is used.  Other wise the data from Jarvis is for the provided baseline.</param>
+        /// <param name="parentProject">Name of the parent project</param>
+        /// <param name="parentProjectBaseline">Baseline to use for the parent data</param>
         public void UpdateDatabase(string project, string baseline, string parentProject, string parentProjectBaseline)
         {
             using (IDatabase db = _engine.Open(dbName))
@@ -87,8 +66,6 @@ namespace TestListSynchronizer
                 UpdateDisabledTests(db, dbTable);
             }
         }
-
-
 
         /// <summary>
         /// 
@@ -107,10 +84,11 @@ namespace TestListSynchronizer
         }
 
         /// <summary>
-        /// 
+        /// If there were any tests that were not run, but had previously been run then then are updated to 
+        /// indicate they were "Not Run"
         /// </summary>
-        /// <param name="db"></param>
-        /// <param name="accessTable"></param>
+        /// <param name="db">database handle</param>
+        /// <param name="accessTable">table in the database to update</param>
         private void UpdateDisabledTests(IDatabase db, string accessTable)
         {
             int currentTest = 0;
@@ -138,68 +116,18 @@ namespace TestListSynchronizer
         }
 
         /// <summary>
-        /// 
+        /// Retrieve the data from Jarvis and use it to update the database
         /// </summary>
-        /// <param name="db"></param>
-        /// <param name="accessTable"></param>
-        /// <param name="xlsxFile"></param>
-        private void UpdateFromFile(IDatabase db, string accessTable, string xlsxFile)
-        {
-            // get count of tests
-            int totalTestCount = TestCount(xlsxFile);
-            int currentTest = 0;
-
-            using (IDatabase xldb = _engine.Open(xlsxFile, "Excel 12.0 Xml;HDR=YES;"))
-            {
-                if (xldb.TableCount != 1)
-                {
-                    throw new Exceptions.ExcelSheetCountException(xlsxFile);
-                }
-
-                using (IRecords xlRecord = xldb.OpenRecords(xldb.TableName(0)))
-                {
-                    Console.WriteLine($"\n\nUpdating database with {xlsxFile}");
-
-                    while (!xlRecord.EOF)
-                    {
-                        currentTest++;
-                        Console.Write($"\r Updating {currentTest} of {totalTestCount}");
-
-                        // suiteid comes from excel as a double
-                        int suiteID = xlRecord.GetSuiteID();
-
-                        // keep track of all the suite IDs we see in the data
-                        _recordUpdater.AddIncommingRecord(suiteID);
-
-                        // query for the suite id record in the access database
-                        string query = $"SELECT * FROM {accessTable} WHERE [Suite ID] = {suiteID}";
-
-                        using (IRecords dbRecords = db.OpenRecords(query))
-                        {
-                            // Check for existence of suite id in the database. Add new record if new
-                            if (dbRecords.EOF)
-                            {
-                                _recordUpdater.NewRecord(dbRecords, xlRecord);
-                                xlRecord.MoveNext();
-                                continue;
-                            }
-
-                            // Update the existing record
-                            _recordUpdater.UpdateRecord(dbRecords, xlRecord);
-                           
-                            xlRecord.MoveNext();
-                        }
-                    }
-                }
-            }
-        }
-    
+        /// <param name="db">database handle</param>
+        /// <param name="accessTable">table in the database to update</param>
+        /// <param name="project">Project name. Example: uflx2_PublicAPI</param>
+        /// <param name="baseline">If not provided the latest baseline is used.  Other wise the data from Jarvis is for the provided baseline.</param>
         private void UpdateFromJarvis(IDatabase db, string accessTable, string project, string baseline)
         {
             // get project results from Jarvis
             List<SuiteResult> results = (baseline == null) ?
-             JarvisWrapper.FetchResults(project) :
-             JarvisWrapper.FetchResults(project, baseline);
+             _jarvis.FetchResults(project) :
+             _jarvis.FetchResults(project, baseline);
 
             // get count of tests
             int totalTestCount = results.Count();
@@ -239,67 +167,18 @@ namespace TestListSynchronizer
             });
         }
 
-
         /// <summary>
         /// 
         /// </summary>
-        /// <param name="db"></param>
-        /// <param name="accessTable"></param>
-        /// <param name="xlsxFile"></param>
-        private void UpdateFromParentFile(IDatabase db, string accessTable, string xlsxFile)
-        {
-            // get count of tests
-            int totalTestCount = TestCount(xlsxFile);
-            int currentTest = 0;
-
-            using (IDatabase xldb = _engine.Open(xlsxFile, "Excel 12.0 Xml;HDR=YES;"))
-            {
-                if (xldb.TableCount != 1)
-                {
-                    throw new Exceptions.ExcelSheetCountException(xlsxFile);
-                }
-
-                using (IRecords xlRecords = xldb.OpenRecords(xldb.TableName(0)))
-                {
-                    Console.WriteLine($"\n\nUpdating database with {xlsxFile}");
-
-                    while (!xlRecords.EOF)
-                    {
-                        currentTest++;
-                        Console.Write($"\r Updating {currentTest} of {totalTestCount}");
-
-                        // suiteid comes from excel as a double
-                        int suiteID = xlRecords.GetSuiteID();
-
-                        // query for the suite id record in the access database
-                        string query = $"SELECT * FROM {accessTable} WHERE [Suite ID] = {suiteID}";
-
-                        using (IRecords dbRecords = db.OpenRecords(query))
-                        {
-
-                            // If we find a test in the parent data that is not in the database then we are probably 
-                            // using the wrong date for the parent data since the rebase should have brought over new tests.
-                            if (dbRecords.EOF)
-                            {
-                                errors.Add($"Suite ID [{suiteID}] not found in database. Possible use of incorrect parent branch result data");
-                                xlRecords.MoveNext();
-                                continue;
-                            }
-
-                            _recordUpdater.UpdateParentRecord(dbRecords, xlRecords);
-
-                            xlRecords.MoveNext();
-                        }
-                    }
-                }
-            }
-        }
-
+        /// <param name="db">database handle</param>
+        /// <param name="dbTable">table in the database to update</param>
+        /// <param name="parentProject">Name of the parent project</param>
+        /// <param name="parentProjectBaseline">Baseline to use for the parent data</param>
         private void UpdateParentFromJarvis(IDatabase db, string dbTable, string parentProject, string parentProjectBaseline)
         {
 
             // get results for the parent project at a specific baseline
-            List<SuiteResult> results = JarvisWrapper.FetchResults(parentProject, parentProjectBaseline);
+            List<SuiteResult> results = _jarvis.FetchResults(parentProject, parentProjectBaseline);
 
             // get count of tests
             int totalTestCount = results.Count();
@@ -334,40 +213,5 @@ namespace TestListSynchronizer
                 }
             });
         }
-
-        /// <summary>
-        /// 
-        /// </summary>
-        /// <param name="xlsxFile"></param>
-        /// <returns></returns>
-        public int TestCount(string xlsxFile)
-        {
-            IDatabaseEngine engine = _dbenginefactory.CreateDatabaseEngine();
-            int testCount;
-
-            using (IDatabase db = engine.Open(xlsxFile, "Excel 12.0 Xml;HDR=YES;"))
-            {
-                if (db.TableCount != 1)
-                {
-                    throw new Exceptions.ExcelSheetCountException(xlsxFile);
-                }
-
-                string query = $"SELECT Count(*) as [CountOfRows] FROM [{db.TableName(0)}]";
-
-                using (IRecords r = db.OpenRecords(query))
-                {
-                    testCount = (int)r.GetFieldValue("CountOfRows");
-                }
-            }
-
-            if (testCount < 0)
-            {
-                throw new Exceptions.ExcelTestCountException(xlsxFile);
-            }
-
-            return testCount;
-        }
-    
-      
     }
 }

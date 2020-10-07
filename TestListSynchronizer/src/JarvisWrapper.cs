@@ -8,16 +8,16 @@ using Newtonsoft.Json;
 
 namespace TestListSynchronizer
 {
-    internal static class JarvisWrapper
+    public class JarvisWrapper :IJarvisWrapper
     {
         static string fields = "--oSuiteId --oResult --oOrganization --oSuiteName --oDefect --oMachineName --oElapsedTime --oPlatform --oSimulationType --oUser --oEnvironmentTags --oKitDate --oFirstFail";
 
-        public static List<SuiteResult> FetchResults(string project)
+        public List<SuiteResult> FetchResults(string project)
         {
             return JsonConvert.DeserializeObject<List<SuiteResult>>(JarvisQueryRawResults(project, null));
         }
 
-        public static List<SuiteResult> FetchResults(string project, string baseline)
+        public List<SuiteResult> FetchResults(string project, string baseline)
         {
             return JsonConvert.DeserializeObject<List<SuiteResult>>(JarvisQueryRawResults(project, baseline));
         }

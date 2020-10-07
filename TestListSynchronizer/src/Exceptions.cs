@@ -23,4 +23,10 @@ namespace TestListSynchronizer.Exceptions
         public DatabaseOpenException(string message) : base(message)
         { }
     }
+
+    public class JarvisNotFoundException : Exception
+    {
+        public JarvisNotFoundException(string message) : base(message)
+        { }
+    }
 }

@@ -9,9 +9,10 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>TestListSynchronizer</RootNamespace>
     <AssemblyName>TestListSynchronizer</AssemblyName>
-    <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <Deterministic>true</Deterministic>
+    <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -46,12 +47,13 @@
   <ItemGroup>
     <Compile Include="Database.cs" />
     <Compile Include="DatabaseEngine.cs" />
-    <Compile Include="DatabaseEngineFactory.cs" />
+    <Compile Include="TestListSyncFactory.cs" />
     <Compile Include="DatabaseSync.cs" />
     <Compile Include="Exceptions.cs" />
     <Compile Include="IDatabase.cs" />
     <Compile Include="IDatabaseEngine.cs" />
-    <Compile Include="IDatabaseEngineFactory.cs" />
+    <Compile Include="ITestListSyncFactory.cs" />
+    <Compile Include="IJarvisWrapper.cs" />
     <Compile Include="IRecords.cs" />
     <Compile Include="IRecordUpdater.cs" />
     <Compile Include="JarvisWrapper.cs" />
