@@ -128,5 +128,64 @@ namespace TestListSynchronizer
                     return value;
             }
         }
+
+        public void NewRecord(IRecords dbRecords, SuiteResult testResult)
+        {
+            dbRecords.Add();
+            dbRecords.SetFieldValue("Suite ID", testResult.SuiteID);
+            dbRecords.SetFieldValue("Suite Name", testResult.SuiteName);
+            dbRecords.SetFieldValue("Defect", testResult.Defect);
+            dbRecords.SetFieldValue("Investigator", "unassigned");
+            dbRecords.SetFieldValue("Machine", testResult.MachineName);
+            dbRecords.SetFieldValue("Test Time", testResult.ElapsedTime);
+            dbRecords.SetFieldValue("Result", testResult.Result);
+            dbRecords.SetFieldValue("Parent Result", "");
+            dbRecords.SetFieldValue("Org", testResult.Organization);
+            dbRecords.SetFieldValue("Platform", testResult.Platform);
+            dbRecords.SetFieldValue("Simulation", testResult.SimulationType);
+            dbRecords.SetFieldValue("User", testResult.User);
+            dbRecords.SetFieldValue("Kit Type", testResult.EnvironmentTags[0]); // first element of array is kit type (asrt or bfr)
+            dbRecords.SetFieldValue("OS", testResult.EnvironmentTags[1]); // second element of array is OS
+            dbRecords.SetFieldValue("Office", testResult.EnvironmentTags[3]); //third element of array is office type
+            dbRecords.SetFieldValue("Kit", testResult.KitDate);
+            dbRecords.SetFieldValue("Parent Kit", "");
+            dbRecords.SetFieldValue("First Fail", testResult.FirstFail);
+            dbRecords.SetFieldValue("Notes", "");
+            dbRecords.SetFieldValue("Activity", "");
+            dbRecords.SetFieldValue("Status", "");
+            dbRecords.Update();
+        }
+
+        public void UpdateRecord(IRecords dbRecords, SuiteResult testResult)
+        {
+            dbRecords.Edit();
+            // We don't update Suite ID, Investigator, Notes, Status, or Activity
+            // Investigator, Notes, Status, Activity do not come from results data.
+            dbRecords.SetFieldValue("Suite Name", testResult.SuiteName);
+            dbRecords.SetFieldValue("Defect", testResult.Defect);
+            dbRecords.SetFieldValue("Machine", testResult.MachineName);
+            dbRecords.SetFieldValue("Test Time", testResult.ElapsedTime);
+            dbRecords.SetFieldValue("Result", testResult.Result);
+            dbRecords.SetFieldValue("Org", testResult.Organization);
+            dbRecords.SetFieldValue("Platform", testResult.Platform);
+            dbRecords.SetFieldValue("Simulation", testResult.SimulationType);
+            dbRecords.SetFieldValue("User", testResult.User);
+            dbRecords.SetFieldValue("Kit Type", testResult.EnvironmentTags[0]); // first element of array is kit type (asrt or bfr)
+            dbRecords.SetFieldValue("OS", testResult.EnvironmentTags[1]); // second element of array is OS
+            dbRecords.SetFieldValue("Office", testResult.EnvironmentTags[3]); //third element of array is office type
+            dbRecords.SetFieldValue("Kit", testResult.KitDate);
+            dbRecords.SetFieldValue("First Fail", testResult.FirstFail);
+            dbRecords.Update();
+        }
+
+        public void UpdateParentRecord(IRecords dbRecords, SuiteResult testResult)
+        {
+            dbRecords.Edit();
+            // When updating parent data we only need result and kit
+            dbRecords.SetFieldValue("Parent Result", testResult.Result);
+            dbRecords.SetFieldValue("Parent Kit", testResult.KitDate);
+            dbRecords.Update();
+        }
+
     }
 }
