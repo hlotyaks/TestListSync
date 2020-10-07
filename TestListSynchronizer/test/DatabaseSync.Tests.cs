@@ -23,6 +23,7 @@ namespace UnitTest
         Mock<IJarvisWrapper> mockJarvis;
         string database = "db";
         string dbtable = "dbtable";
+        string jarvisApp = "jarvis.exe";
 
         [TestInitialize]
         public void TestSetup()
@@ -38,9 +39,9 @@ namespace UnitTest
 
             mockFactory.Setup(x => x.CreateDatabaseEngine()).Returns(mockEngine.Object);
             mockFactory.Setup(x => x.CreateRecordUpdater()).Returns(mockRecordUpdater.Object);
-            mockFactory.Setup(x => x.CreateJarvisWrapper()).Returns(mockJarvis.Object);
+            mockFactory.Setup(x => x.CreateJarvisWrapper(jarvisApp)).Returns(mockJarvis.Object);
 
-            dbsync = new DatabaseSync(database, dbtable, mockFactory.Object);
+            dbsync = new DatabaseSync(database, dbtable, mockFactory.Object, jarvisApp);
             dbsync.Should().NotBeNull();
         }
 

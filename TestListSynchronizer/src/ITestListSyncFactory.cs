@@ -4,7 +4,7 @@
     {
         IDatabaseEngine CreateDatabaseEngine();
         IRecordUpdater CreateRecordUpdater();
-        IJarvisWrapper CreateJarvisWrapper();
+        IJarvisWrapper CreateJarvisWrapper(string jarvisApp);
 
     }
 }

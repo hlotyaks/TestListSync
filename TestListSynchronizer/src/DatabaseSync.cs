@@ -15,14 +15,13 @@ namespace TestListSynchronizer
     public class DatabaseSync
     {
         private List<int> _incomingSuiteIDs = new List<int>();
-        private List<string> errors = new List<string>();
+        private List<string> _errors = new List<string>();
         IDatabaseEngine _engine;
         ITestListSyncFactory _dbenginefactory;
         IRecordUpdater _recordUpdater;
         IJarvisWrapper _jarvis;
-        string dbName;
-        string dbTable;
-        static JarvisWrapper jarvis;
+        string _dbName;
+        string _dbTable;
 
         //
         // This link has useful information about install the db provider redistributable.
@@ -34,14 +33,14 @@ namespace TestListSynchronizer
         /// </summary>
         /// <param name="db"></param>
         /// <param name="table"></param>
-        public DatabaseSync(string db, string table, ITestListSyncFactory factory)
+        public DatabaseSync(string db, string table, ITestListSyncFactory factory, string jarvisApp)
         {
             _dbenginefactory = factory;
             _engine = _dbenginefactory.CreateDatabaseEngine();
             _recordUpdater = _dbenginefactory.CreateRecordUpdater();
-            _jarvis = _dbenginefactory.CreateJarvisWrapper();
-            dbName = db;
-            dbTable = table;
+            _jarvis = _dbenginefactory.CreateJarvisWrapper(jarvisApp);
+            _dbName = db;
+            _dbTable = table;
         }
 
         /// <summary>
@@ -54,16 +53,16 @@ namespace TestListSynchronizer
         /// <param name="parentProjectBaseline">Baseline to use for the parent data</param>
         public void UpdateDatabase(string project, string baseline, string parentProject, string parentProjectBaseline)
         {
-            using (IDatabase db = _engine.Open(dbName))
+            using (IDatabase db = _engine.Open(_dbName))
             {
-                UpdateFromJarvis(db, dbTable, project, baseline);
+                UpdateFromJarvis(db, _dbTable, project, baseline);
                 
                 if (parentProject != null)
                 {
-                    UpdateParentFromJarvis(db, dbTable, parentProject, parentProjectBaseline);
+                    UpdateParentFromJarvis(db, _dbTable, parentProject, parentProjectBaseline);
                 }
 
-                UpdateDisabledTests(db, dbTable);
+                UpdateDisabledTests(db, _dbTable);
             }
         }
 
@@ -72,7 +71,7 @@ namespace TestListSynchronizer
         /// </summary>
         public List<string> ErrorList
         {
-            get => errors;
+            get => _errors;
         }
 
         /// <summary>
@@ -80,7 +79,7 @@ namespace TestListSynchronizer
         /// </summary>
         public bool IsErrors 
         {
-            get => errors.Count() != 0;
+            get => _errors.Count() != 0;
         }
 
         /// <summary>
@@ -204,7 +203,7 @@ namespace TestListSynchronizer
                     // using the wrong date for the parent data since the rebase should have brought over new tests.
                     if (dbRecords.EOF)
                     {
-                        errors.Add($"Suite ID [{suiteID}] not found in database. Possible use of incorrect parent branch result data");
+                        _errors.Add($"Suite ID [{suiteID}] not found in database. Possible use of incorrect parent branch result data");
                     }
                     else 
                     {

@@ -13,9 +13,9 @@ namespace TestListSynchronizer
             return new DatabaseEngine() as IDatabaseEngine;
         }
 
-        public IJarvisWrapper CreateJarvisWrapper()
+        public IJarvisWrapper CreateJarvisWrapper(string jarvisApp)
         {
-            return new JarvisWrapper() as IJarvisWrapper;
+            return new JarvisWrapper(jarvisApp) as IJarvisWrapper;
         }
 
         public IRecordUpdater CreateRecordUpdater()

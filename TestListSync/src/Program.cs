@@ -138,16 +138,24 @@ namespace TestListSync
                         IllegalCommands = true;
                     }
 
-                    ITestListSyncFactory factory = new TestListSyncFactory();
-                    DatabaseSync dbsync = new TestListSynchronizer.DatabaseSync(dbFile, dbTable, factory);
-
                     try
                     {
                         if (!System.IO.File.Exists(jarvisPath))
                         {
                             throw new Exceptions.JarvisNotFoundException($"{jarvisPath} not found.");
                         }
+                    }
+                    catch (Exceptions.JarvisNotFoundException e)
+                    {
+                        Console.WriteLine($"Excpetion: {e.Message}");
+                        return;
+                    }
 
+                    ITestListSyncFactory factory = new TestListSyncFactory();
+                    DatabaseSync dbsync = new TestListSynchronizer.DatabaseSync(dbFile, dbTable, factory, jarvisPath);
+
+                    try 
+                    { 
                         if (!IllegalCommands)
                         {
                             dbsync.UpdateDatabase(project, baseline, projectParent, projectParentBaseline);
@@ -165,10 +173,7 @@ namespace TestListSync
                     {
                         Console.WriteLine($"Exception: Error opening database {e.Message}. Verify it is not currently open.");
                     }
-                    catch (Exceptions.JarvisNotFoundException e)
-                    {
-                        Console.WriteLine($"Excpetion: {e.Message}");
-                    }
+
                     finally
                     {
                         if (!dbsync.IsErrors)

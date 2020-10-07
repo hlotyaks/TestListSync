@@ -11,21 +11,25 @@ namespace TestListSynchronizer
     public class JarvisWrapper :IJarvisWrapper
     {
         static string fields = "--oSuiteId --oResult --oOrganization --oSuiteName --oDefect --oMachineName --oElapsedTime --oPlatform --oSimulationType --oUser --oEnvironmentTags --oKitDate --oFirstFail";
+        string _jarvisApp;
+
+        public JarvisWrapper(string jarvisApp)
+        {
+            _jarvisApp = jarvisApp;
+        }
 
         public List<SuiteResult> FetchResults(string project)
         {
-            return JsonConvert.DeserializeObject<List<SuiteResult>>(JarvisQueryRawResults(project, null));
+            return JsonConvert.DeserializeObject<List<SuiteResult>>(JarvisQueryRawResults(project, null, _jarvisApp));
         }
 
         public List<SuiteResult> FetchResults(string project, string baseline)
         {
-            return JsonConvert.DeserializeObject<List<SuiteResult>>(JarvisQueryRawResults(project, baseline));
+            return JsonConvert.DeserializeObject<List<SuiteResult>>(JarvisQueryRawResults(project, baseline, _jarvisApp));
         }
 
-        private static string JarvisQueryRawResults(string project, string baseline)
+        private static string JarvisQueryRawResults(string project, string baseline, string jarvisApp)
         {
-            string jarvisApp = @"C:\Users\hlotyaks\bin\Jarvis.exe";
-
             string args = (baseline == null) ?
                 $"queryRawResults --project {project} {fields}" :
                 $"queryRawResults --project {project} --baseline {baseline} {fields}";
@@ -45,7 +49,6 @@ namespace TestListSynchronizer
             jarvisProc.Start();
 
             return jarvisProc.StandardOutput.ReadToEnd();
-
         }
     }
 }
