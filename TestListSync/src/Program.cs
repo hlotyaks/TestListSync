@@ -25,11 +25,11 @@ namespace TestListSync
             [Option("parentBaseline", Required = false, HelpText = "Baseline for results from parent branch")]
             public string ProjectParentBaseline { get; set; }
 
-            [Option('f', "files", Required = true, HelpText = "Files containing latest test results")]
-            public IEnumerable<string> TestFiles { get; set; }
+            //[Option('f', "files", Required = true, HelpText = "Files containing latest test results")]
+            //public IEnumerable<string> TestFiles { get; set; }
 
-            [Option('p', "parent", Required = false, HelpText = "Parent Files containing test results from last RI")]
-            public IEnumerable<string> ParentrTestFiles { get; set; }
+            //[Option('p', "parent", Required = false, HelpText = "Parent Files containing test results from last RI")]
+            //public IEnumerable<string> ParentrTestFiles { get; set; }
 
             [Option('d', "database", Required = true, HelpText = "Database file name containing test results")]
             public string DatabaseFile { get; set; }
